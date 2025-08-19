@@ -1,0 +1,7 @@
+Method,Optimal_Clusters,Analysis_Date
+Silhouette,2,20250710_112001
+Calinski Harabasz,10,20250710_112001
+Davies Bouldin,12,20250710_112001
+Bic,7,20250710_112001
+Aic,11,20250710_112001
+Elbow,7,20250710_112001

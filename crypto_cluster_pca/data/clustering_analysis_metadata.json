@@ -1,0 +1,27 @@
+{
+  "analysis_timestamp": "20250710_112001",
+  "data_shape": [
+    280,
+    25
+  ],
+  "total_variance_explained": 0.8968177275241125,
+  "date_range": {
+    "start": "2024-10-01 00:00:00",
+    "end": "2025-07-02 15:05:08"
+  },
+  "recommended_clusters": 7,
+  "optimal_clusters_by_method": {
+    "silhouette": "2",
+    "calinski_harabasz": "10",
+    "davies_bouldin": "12",
+    "bic": "7",
+    "aic": "11",
+    "elbow": 7
+  },
+  "files_created": [
+    "clustering_analysis_cluster_metrics.csv",
+    "clustering_analysis_optimal_clusters.csv",
+    "clustering_analysis_pca_data.csv",
+    "clustering_analysis_pca_scaled.csv"
+  ]
+}

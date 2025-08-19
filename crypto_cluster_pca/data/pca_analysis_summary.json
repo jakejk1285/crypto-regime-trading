@@ -1,0 +1,18 @@
+{
+  "analysis_date": "2025-07-09T10:56:43.002219",
+  "optimal_dataset": "regime",
+  "original_features": 138,
+  "cleaned_features": 117,
+  "optimal_components": 25,
+  "variance_captured": 0.8968177275241136,
+  "interpretability_score": 0.010829637271733186,
+  "processing_time": 0.00542902946472168,
+  "dimensionality_reduction_pct": 78.63247863247864,
+  "files_exported": [
+    "optimal_features_cleaned.csv",
+    "pca_components_optimal.csv",
+    "pca_loadings_optimal.csv",
+    "pca_variance_explained.csv",
+    "pca_component_interpretations.csv"
+  ]
+}

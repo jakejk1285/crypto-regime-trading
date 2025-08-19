@@ -1,0 +1,97 @@
+# Build artifacts
+paper_trading/build/
+paper_trading/cmake-build-debug/
+paper_trading/CMakeFiles/
+paper_trading/CMakeCache.txt
+paper_trading/cmake_install.cmake
+paper_trading/Makefile
+paper_trading/crypto_paper_trading
+*.o
+*.o.d
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Data cache files
+*.pkl
+*.pickle
+*.cache
+
+# Logs
+*.log
+logs/
+*.out
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# API keys and secrets
+.env
+config/secrets.json
+*.key
+*.pem
+
+# Trading data
+shared_regime_data/regime_output/*.json
+
+# Screenshots
+*.png
+*.jpg
+*.jpeg
+*.gif
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup

@@ -1,0 +1,32 @@
+# Core Data Science Libraries
+pandas>=2.0.0
+numpy>=1.24.0
+scipy>=1.10.0
+
+# Machine Learning
+scikit-learn>=1.3.0
+
+# Data Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.15.0
+
+# Interactive Notebooks
+jupyter>=1.0.0
+ipywidgets>=8.0.0
+notebook>=6.4.0
+
+# Data Collection and APIs
+requests>=2.31.0
+python-dotenv>=1.0.0
+
+# Development Utilities
+tqdm>=4.64.0
+pathlib2>=2.3.7
+joblib>=1.2.0
+
+# Optional: Advanced Trading Features
+# Uncomment if needed for enhanced functionality
+# ta-lib>=0.4.0          # Technical Analysis Library
+# ccxt>=2.0.0            # Cryptocurrency Exchange Trading Library
+# alpaca-trade-api>=3.0.0  # Alpaca Trading API

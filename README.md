@@ -281,6 +281,10 @@ strategy->showCurrentHoldings();
   - `backtest_data_manager.py`: Data collection and management
   - `expected_value_analyzer.py`: EV optimization analysis
 - **`research/`**: Jupyter notebooks for analysis and visualization
+  - `01_data_collection.ipynb`: Cryptocurrency price data gathering via CoinGecko API
+  - `02_feature_engineering.ipynb`: Technical indicator calculation and normalization  
+  - `03_pca_analysis.ipynb`: Dimensionality reduction and component interpretation
+  - `04_clustering_analysis.ipynb`: Market regime classification and analysis
 
 ### C++ Trading System (`paper_trading/`)
 - **`src/trading_strategy.cpp`**: Core trading logic and position management
@@ -319,6 +323,12 @@ strategy->showCurrentHoldings();
 - **External APIs**: Relies on CoinGecko and Alpaca API availability
 - **Internet Connection**: Requires stable connection for real-time data
 - **Computational Requirements**: PCA and clustering analysis needs adequate memory/CPU
+
+### Research Evolution Limitations
+- **Initial Research Approach**: The project began with comprehensive PCA analysis that revealed 4 natural market regimes, but the trading system was built around a 7-regime framework before this insight was gained
+- **Architecture Mismatch**: Trading strategy and backtesting systems use 7-regime classification while research notebooks show optimal 4-regime clustering
+- **Documentation Inconsistency**: Some analysis sections reflect the improved 4-regime understanding while the production system maintains the original 7-regime structure
+- **Future Alignment**: A complete system refactor to align with 4-regime findings would improve performance and interpretability
 
 ## 🚀 Future Improvements
 

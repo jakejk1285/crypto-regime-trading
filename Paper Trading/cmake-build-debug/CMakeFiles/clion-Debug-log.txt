@@ -1,1 +1,0 @@
-CMakeLists.txt not found in /Users/jakekostoryz/Desktop/Personal Projects/CryptoTrading/Paper Trading Select CMakeLists.txt

@@ -146,24 +146,27 @@ make
 ## 📊 Backtesting Results
 
 ### Performance Summary (2024-2025, 1-Year Limited Dataset)
-- **Total Return**: 23.71%
-- **Sharpe Ratio**: 1.85 (corrected calculation methodology)
-- **Maximum Drawdown**: 8.21%
-- **Win Rate**: 84.2%
-- **Total Trades**: 155
-- **Profit Factor**: 2.33
+- **Total Return**: 13.63%
+- **Sharpe Ratio**: 0.345 (using corrected 3.95% risk-free rate)
+- **Maximum Drawdown**: 11.26%
+- **Win Rate**: 53.0%
+- **Total Trades**: 132
+- **Final Portfolio Value**: $113,632
 
 ### Risk Metrics
-- **Annualized Return**: 23.71%
-- **Annualized Volatility**: 12.83%
-- **Alpha vs Bitcoin**: -8.4%
+- **Annualized Return**: 10.12%
+- **Annualized Volatility**: 17.88%
+- **Alpha vs Bitcoin**: TBD (requires benchmark comparison)
 - **Risk-Free Rate**: 3.95% (10Y Treasury Jan 2, 2024, [FRED DGS10](https://fred.stlouisfed.org/series/DGS10))
 
 ### Regime Performance Breakdown
 ```
-✅ BALANCED (84% WR):           48 trades | +$8,430 P&L
-✅ MOMENTUM (85% WR):           107 trades | +$15,280 P&L  
-🎯 Diversified approach trading all positive regimes for optimal risk-adjusted returns
+📊 Research-Based Multi-Regime Approach:
+✅ Bull Momentum (Regime 0):     Aggressive allocation (30%) - Ideal conditions
+✅ Volatile Rebound (Regime 3):  Moderate allocation (20%) - High risk/reward  
+✅ Sideways/Low Vol (Regime 2):  Balanced allocation (25%) - Range trading
+✅ Sharp Correction (Regime 1):  Defensive allocation (12%) - Oversold bounces
+🎯 Total: 132 trades with 53.0% win rate and 13.63% total return
 ```
 
 ## 🔧 Configuration
@@ -174,7 +177,7 @@ make
 INITIAL_CAPITAL = 100000
 RISK_FREE_RATE = 0.0395  # 3.95% (10Y Treasury Jan 2, 2024)
 REBALANCE_FREQUENCY = 'D'  # Daily
-USE_EV_FILTER = False  # Optimized for diversified regime trading
+USE_EV_FILTER = False  # Research-based regime optimization without direct EV filtering
 ```
 
 ### C++ Configuration

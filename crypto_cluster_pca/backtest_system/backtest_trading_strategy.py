@@ -142,26 +142,27 @@ class RegimeBasedTradingStrategy:
 
     def calculate_position_size(self, regime_data: Dict, symbol: str, coin_score: float, current_price: float) -> float:
         """
-        Enhanced position sizing with volatility and correlation adjustments
+        Research-based position sizing optimized for all profitable regimes
         """
-        # OPTIMIZED ALLOCATION: Focus on Big Three only
-        # Based on EV Analysis - maximize exposure to highest performers
-        regime_risk = {
-            # ELIMINATED REGIMES (Negative/Low EV)
-            "CRISIS": 0.0,              # Eliminated
-            "WAIT_AND_SEE": 0.0,        # -0.421R EV, 60% WR - ELIMINATED
-            "DEFENSIVE": 0.0,           # -0.668R EV, 16.7% WR - ELIMINATED  
-            "EXTREME_VOLATILITY": 0.0,  # -0.891R EV, 3.3% WR - ELIMINATED
-            "CONSERVATIVE": 0.0,        # Marginal performer - ELIMINATED
-            "STABLE_GROWTH": 0.0,       # 1.156R EV but 35.6% WR - ELIMINATED (too risky)
-            
-            # BIG THREE WINNERS (Increased allocations)
-            # Note: Both BREAKOUT_MOMENTUM and MODERATE_MOMENTUM map to "MOMENTUM" strategy
-            "BALANCED": 0.45,           # 45% - BASELINE_MARKET (3.305R EV, 93% WR) - TOP PERFORMER
-            "MOMENTUM": 0.55,           # 55% - BOTH momentum regimes (combined 2.173R + 0.923R EV)
-        }
+        regime_id = regime_data['regime_id']
+        strategy = regime_data['strategy']
         
-        base_percent = regime_risk.get(regime_data['strategy'], 0.15)
+        # RESEARCH + EV OPTIMIZED ALLOCATION per regime characteristics
+        if regime_id == 0:  # Bull Momentum (13.8% - ideal conditions)
+            base_percent = 0.30  # More aggressive for best regime
+        elif regime_id == 3:  # Volatile Rebound (20.7% - high risk/reward)
+            base_percent = 0.20  # Increased for high reward potential
+        elif regime_id == 2:  # Sideways/Low Vol (38.5% - range trading)
+            base_percent = 0.25  # Increased for stable conditions
+        elif regime_id == 1:  # Sharp Correction (26.9% - defensive)
+            base_percent = 0.12  # Slightly increased for oversold bounces
+        else:
+            # Fallback for other regimes
+            base_percent = 0.18  # Higher default
+            
+        # Avoid eliminated strategies
+        if strategy == "WAIT_AND_SEE":
+            base_percent = 0.0
         
         # Volatility adjustment (reduce size for high vol assets)
         pc2_factor = abs(regime_data['pc2_volatility_factor'])
@@ -307,25 +308,33 @@ class RegimeBasedTradingStrategy:
 
     def regime_specific_trading_rules(self, regime_data: Dict, coin_scores: Dict[str, float]) -> Dict[str, bool]:
         """
-        Apply regime-specific trading filters and thresholds
+        Apply regime-specific trading filters and thresholds based on research insights
         """
         strategy = regime_data['strategy']
+        regime_id = regime_data['regime_id']
         persistence = regime_data['persistence']
         market_stress = regime_data['market_stress']
         
         trading_decisions = {}
         
-        # OPTIMIZED THRESHOLDS: Focus resources on Big Winners
-        # Lower thresholds for winners, eliminate losers completely
-        if strategy == "BALANCED":  # BASELINE_MARKET - 3.305R EV, 93% WR
-            threshold = 0.30  # Lowest threshold - encourage maximum trading
-        elif strategy == "MOMENTUM":  # Both MOMENTUM regimes (1 & 5) - Strong performers  
-            threshold = 0.35  # Low threshold - combined strong performance
+        # RESEARCH + EV OPTIMIZED THRESHOLDS: Use EV insights to improve thresholds
+        if regime_id == 0:  # Bull Momentum (13.8% - ideal conditions)
+            threshold = 0.10  # Lower threshold - maximize high-probability opportunities
+        elif regime_id == 3:  # Volatile Rebound (20.7% - high risk/reward) 
+            threshold = 0.20  # Lower threshold - capture more rebound opportunities
+        elif regime_id == 2:  # Sideways/Low Vol (38.5% - range trading)
+            threshold = 0.25  # Reduced threshold - more range trading opportunities  
+        elif regime_id == 1:  # Sharp Correction (26.9% - defensive)
+            threshold = 0.35  # Reduced threshold - capture oversold bounces better
         else:
-            # All other regimes eliminated - impossible thresholds
-            threshold = 0.99  # Effectively disabled
+            # Other regimes - moderate approach
+            threshold = 0.25  # Lower default threshold
         
-        # Persistence filter (don't trade in unstable regimes) - relaxed
+        # Stress adjustment - increase threshold during high stress
+        if market_stress > 0.7:
+            threshold += 0.10  # Be more selective during stress
+        
+        # Persistence filter (don't trade in very unstable regimes)
         if persistence < 0.25:  # Only very unstable regimes (lowered from 0.3)
             threshold += 0.15  # Smaller penalty (lowered from 0.2)
         
@@ -429,28 +438,31 @@ class RegimeBasedTradingStrategy:
 
     def should_trade_regime(self, regime_data: Dict) -> bool:
         """
-        OPTIMIZED: Focus on Big Three winners only - eliminates negative EV regimes
-        Based on EV analysis: BASELINE(3.305R), BREAKOUT(2.173R), MODERATE(0.923R)
+        IMPROVED: Trade multiple profitable regimes based on research insights
+        Uses research-based regime classification for better opportunities
         """
         strategy = regime_data['strategy']
+        regime_id = regime_data['regime_id']
         
-        # ONLY TRADE THE WINNING STRATEGIES
-        # Based on regime-to-strategy mapping from data manager:
-        # - Regime 2 (BASELINE_MARKET): 3.305R EV, 93% WR → "BALANCED" strategy
-        # - Regime 5 (BREAKOUT_MOMENTUM): 2.173R EV, 76% WR → "MOMENTUM" strategy
-        # - Regime 1 (MODERATE_MOMENTUM): 0.923R EV, 78% WR → "MOMENTUM" strategy
+        # Based on research analysis, trade these profitable scenarios:
+        # - Bull Momentum: Ideal conditions (13.8% of time)
+        # - Volatile Rebound: High risk/reward (20.7% of time)  
+        # - Sideways: Range trading opportunities (38.5% of time)
+        # Only avoid Sharp Correction during severe stress
         
-        winning_strategies = ["BALANCED", "MOMENTUM"]
-        
-        if strategy not in winning_strategies:
-            return False  # Completely eliminate negative/marginal EV regimes
-        
-        # Enhanced filters for the winning regimes to maximize performance
+        # Map regimes to research insights
+        if strategy == "WAIT_AND_SEE":
+            return False  # Always avoid uncertainty regimes
+            
+        # Sharp correction regime - only trade if not in extreme stress
+        if regime_id == 1 and regime_data['market_stress'] > 0.85:
+            return False  # Avoid severe correction phases
+            
+        # All other regimes are tradeable with appropriate position sizing
         return (
-            regime_data['persistence'] > 0.6 and      # Reasonably stable
-            regime_data['market_stress'] < 0.6 and    # Manageable stress
-            regime_data['avg_duration'] > 4.0 and     # Sufficient duration
-            regime_data['should_trade']                # Basic trade flag
+            regime_data['persistence'] > 0.4 and      # Reduced threshold for more opportunities
+            regime_data['market_stress'] < 0.9 and    # Allow higher stress levels
+            regime_data.get('should_trade', True)      # Basic trade flag (default True)
         )
 
     def process_regime_change(self, old_regime_id: Optional[int], new_regime_id: int,

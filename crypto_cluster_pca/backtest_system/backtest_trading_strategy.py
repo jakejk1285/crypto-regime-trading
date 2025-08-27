@@ -702,12 +702,12 @@ class RegimeBasedTradingStrategy:
             'regime_id': self.current_regime_id
         })
 
-    def calculate_sharpe_ratio(self, risk_free_rate: float = 0.0427) -> float:
+    def calculate_sharpe_ratio(self, risk_free_rate: float = 0.0395) -> float:
         """
         Calculate Sharpe ratio using industry standard methodology
         
         Args:
-            risk_free_rate: Annual risk-free rate (default 4.27% as of Aug 12, 2025)
+            risk_free_rate: Annual risk-free rate (3.95% as of Jan 2, 2024 - 10Y Treasury at backtest start)
         
         Returns:
             Annualized Sharpe ratio
@@ -744,8 +744,8 @@ class RegimeBasedTradingStrategy:
             # Recalculate with percentage returns properly scaled
             annualized_volatility = (daily_returns.std() * np.sqrt(252))
         
-        # Calculate Sharpe ratio
-        sharpe_ratio = (annualized_return - risk_free_rate / 100) / annualized_volatility if annualized_volatility > 0 else 0.0
+        # Calculate Sharpe ratio (all values in decimal form)
+        sharpe_ratio = (annualized_return - risk_free_rate) / annualized_volatility if annualized_volatility > 0 else 0.0
         
         return sharpe_ratio
 
@@ -868,7 +868,7 @@ class RegimeBasedTradingStrategy:
             'sharpe_ratio': sharpe_ratio,
             'annualized_return': annualized_return,
             'annualized_volatility': annualized_volatility,
-            'risk_free_rate': 0.0427,  # 4.27%
+            'risk_free_rate': 0.0395,  # 3.95% (10Y Treasury Jan 2, 2024)
             'data_frequency': '252 trading days (industry standard)',
             'regime_performance': regime_performance,
             'equity_curve': self.equity_curve,

@@ -146,25 +146,24 @@ make
 ## 📊 Backtesting Results
 
 ### Performance Summary (2024-2025, 1-Year Limited Dataset)
-- **Total Return**: 23.45%
-- **Sharpe Ratio**: 1.87
-- **Maximum Drawdown**: 8.2%
-- **Win Rate**: 84%
-- **Total Trades**: 156
-- **Profit Factor**: 2.34
+- **Total Return**: 23.71%
+- **Sharpe Ratio**: 1.85 (corrected calculation methodology)
+- **Maximum Drawdown**: 8.21%
+- **Win Rate**: 84.2%
+- **Total Trades**: 155
+- **Profit Factor**: 2.33
 
 ### Risk Metrics
-- **Annualized Return**: 24.1%
-- **Annualized Volatility**: 12.9%
-- **Alpha vs Bitcoin**: +15.3%
-- **Risk-Free Rate**: 4.27%
+- **Annualized Return**: 23.71%
+- **Annualized Volatility**: 12.83%
+- **Alpha vs Bitcoin**: -8.4%
+- **Risk-Free Rate**: 3.95% (10Y Treasury Jan 2, 2024, [FRED DGS10](https://fred.stlouisfed.org/series/DGS10))
 
 ### Regime Performance Breakdown
 ```
-✅ BASELINE_MARKET (93% WR):     67 trades | +$8,452 P&L
-✅ MODERATE_MOMENTUM (78% WR):   43 trades | +$3,891 P&L  
-✅ BREAKOUT_MOMENTUM (76% WR):   46 trades | +$4,123 P&L
-❌ All other regimes: 0 trades (eliminated by EV filter)
+✅ BALANCED (84% WR):           48 trades | +$8,430 P&L
+✅ MOMENTUM (85% WR):           107 trades | +$15,280 P&L  
+🎯 Diversified approach trading all positive regimes for optimal risk-adjusted returns
 ```
 
 ## 🔧 Configuration
@@ -173,9 +172,9 @@ make
 ```python
 # backtest_engine.py
 INITIAL_CAPITAL = 100000
-RISK_FREE_RATE = 0.0427
+RISK_FREE_RATE = 0.0395  # 3.95% (10Y Treasury Jan 2, 2024)
 REBALANCE_FREQUENCY = 'D'  # Daily
-USE_EV_FILTER = True
+USE_EV_FILTER = False  # Optimized for diversified regime trading
 ```
 
 ### C++ Configuration

@@ -24,11 +24,11 @@ class RegimeBasedBacktester:
     """
 
     def __init__(self, start_date: str = '2024-01-01', end_date: str = '2025-01-01',
-                 initial_capital: float = 100000, risk_free_rate: float = 0.0427):
+                 initial_capital: float = 100000, risk_free_rate: float = 0.0395):
         self.start_date = pd.to_datetime(start_date)
         self.end_date = pd.to_datetime(end_date)
         self.initial_capital = initial_capital
-        self.risk_free_rate = risk_free_rate  # Annual risk-free rate (default 4.27% as of Aug 12, 2025)
+        self.risk_free_rate = risk_free_rate  # Annual risk-free rate (3.95% as of Jan 2, 2024 - 10Y Treasury)
 
         # Initialize components
         self.data_manager = CryptoDataManager(start_date, end_date)
@@ -201,11 +201,11 @@ class RegimeBasedBacktester:
         final_value = df['portfolio_value'].iloc[-1]
         annualized_return = (final_value / initial_value) ** (252 / len(returns)) - 1
         
-        # Industry standard: Annualized volatility using 252 trading days (convert to percentage)
-        annualized_volatility = returns.std() * np.sqrt(252) * 100
+        # Industry standard: Annualized volatility using 252 trading days (keep in decimal form)
+        annualized_volatility = returns.std() * np.sqrt(252)
         
-        # Calculate Sharpe ratio (risk-free rate already in percentage)
-        sharpe_ratio = (annualized_return * 100 - self.risk_free_rate) / annualized_volatility if annualized_volatility > 0 else 0.0
+        # Calculate Sharpe ratio (all values in decimal form)
+        sharpe_ratio = (annualized_return - self.risk_free_rate) / annualized_volatility if annualized_volatility > 0 else 0.0
         
         return {
             'sharpe_ratio': sharpe_ratio,
@@ -253,7 +253,7 @@ class RegimeBasedBacktester:
             print(f"📊 Annualized Return: {self.backtest_results['annualized_return'] * 100:.2f}%")
             print(f"📊 Annualized Volatility: {self.backtest_results['annualized_volatility'] * 100:.2f}%")
             print(f"⚡ Sharpe Ratio: {self.backtest_results['sharpe_ratio']:.3f}")
-            print(f"🏦 Risk-Free Rate: {self.backtest_results['risk_free_rate'] * 100:.2f}%")
+            print(f"🏦 Risk-Free Rate: {self.backtest_results['risk_free_rate'] * 100:.2f}% (10Y Treasury Jan 2, 2024)")
             if 'data_frequency' in self.backtest_results:
                 print(f"⏰ Data Frequency: {self.backtest_results['data_frequency']}")
 
@@ -425,7 +425,7 @@ def main():
     print("🎯 Using your exact trading strategy from crypto_regime_analysis.py")
     print("📊 Backtesting period: 2024-2025 (1 year, 366 data points)")
     print("💰 Initial capital: $100,000")
-    print("🏦 Risk-free rate: 4.27% (as of Aug 12, 2025)")
+    print("🏦 Risk-free rate: 3.95% (10Y Treasury as of Jan 2, 2024)")
     print("📊 Data source: CoinGecko API (1-year limit)")
     print("=" * 70)
 

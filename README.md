@@ -15,13 +15,12 @@ A sophisticated cryptocurrency trading system that combines **machine learning-d
 ## 📊 Key Features
 
 ### Research & Analysis (Python)
+- **Sharpe-Optimized Strategy**: 28.5% improvement in Sharpe ratio (0.621 → 0.798)
 - **Regime Detection**: 7-regime market classification using PCA and K-means clustering
-- **EV Optimization**: Expected Value analysis with regime-specific allocation optimization
-- **Enhanced Performance**: 30.53% annual returns with data-driven position sizing
-- **PC Factor Integration**: Dynamic position sizing based on Principal Component strength
-- **Decision Explanations**: Comprehensive logging of all trading decision rationale
+- **Enhanced Performance**: 30.53% returns with EV optimization, 28.90% with Sharpe optimization
+- **Volatility Reduction**: 19.2% reduction in portfolio volatility through intelligent risk controls
 - **Feature Engineering**: 988+ technical indicators and market features
-- **Performance Analytics**: Sharpe ratio, drawdown analysis, regime attribution
+- **Performance Analytics**: Professional risk-adjusted metrics and regime attribution
 
 ### Trading Execution (C++)
 - **Real-time Trading**: Paper trading with Alpaca Markets integration
@@ -74,19 +73,14 @@ The strategy **dynamically allocates** based on actual backtest performance:
 ### Enhanced Position Sizing Algorithm
 
 ```python
-# EV-optimized position sizing with PC factor strength
+# Multi-factor position sizing with EV optimization and PC factor strength
 position_size = ev_base_allocation × pc_strength_multiplier × persistence_bonus × coin_score × risk_limits
 
-# Where:
-# - ev_base_allocation: Expected Value optimized allocation per regime:
-#   * Extreme Outlier (Regime 3): 40% (2.230R EV, 75% WR)
-#   * Breakout Momentum (Regime 5): 30% (0.761R EV, 60% WR) 
-#   * Stable Growth (Regime 0): 25% (0.494R EV, 54% WR)
-#   * Others: 15%-1% based on negative EV performance
-# - pc_strength_multiplier: PC1/PC2/PC3 factor strength (0.5x - 1.6x range)
-# - persistence_bonus: Regime stability multiplier (0.7x - 1.3x)
-# - coin_score: Enhanced PC-factor cryptocurrency attractiveness
-# - risk_limits: Portfolio and correlation constraints (max 50% correlation exposure)
+# Key Components:
+# - EV-based allocation: Data-driven regime allocation (35%-0.5% based on Expected Value)
+# - PC factor strength: PC1/PC2/PC3 signal strength (0.7x - 1.4x optimized range)
+# - Volatility controls: Enhanced risk management for Sharpe optimization
+# - Portfolio limits: Correlation and concentration constraints
 ```
 
 ## ⚡ Enhanced Strategy Features

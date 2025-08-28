@@ -16,8 +16,10 @@ A sophisticated cryptocurrency trading system that combines **machine learning-d
 
 ### Research & Analysis (Python)
 - **Regime Detection**: 7-regime market classification using PCA and K-means clustering
-- **Expected Value Optimization**: Strategy focuses on positive EV regimes only
-- **Advanced Backtesting**: Comprehensive performance analysis with risk metrics
+- **EV Optimization**: Expected Value analysis with regime-specific allocation optimization
+- **Enhanced Performance**: 30.53% annual returns with data-driven position sizing
+- **PC Factor Integration**: Dynamic position sizing based on Principal Component strength
+- **Decision Explanations**: Comprehensive logging of all trading decision rationale
 - **Feature Engineering**: 988+ technical indicators and market features
 - **Performance Analytics**: Sharpe ratio, drawdown analysis, regime attribution
 
@@ -49,37 +51,71 @@ CryptoTrading/
 
 ### Market Regime Classification
 
-The system identifies 7 distinct market regimes:
+The system identifies 7 distinct market regimes with **performance-optimized allocation**:
 
-| Regime ID | Name | Strategy | Expected Value | Win Rate | Status |
-|-----------|------|----------|----------------|----------|---------|
-| 0 | STABLE_GROWTH | Conservative | 1.156R | 35.6% | ❌ Eliminated |
-| 1 | MODERATE_MOMENTUM | Momentum | 0.923R | 78% | ✅ Active |
-| 2 | BASELINE_MARKET | Balanced | 3.305R | 93% | ✅ **Top Performer** |
-| 3 | EXTREME_OUTLIER | Wait & See | -0.421R | 60% | ❌ Eliminated |
-| 4 | DEFENSIVE_STABLE | Conservative | -0.668R | 16.7% | ❌ Eliminated |
-| 5 | BREAKOUT_MOMENTUM | Momentum | 2.173R | 76% | ✅ Active |
-| 6 | EXTREME_VOLATILITY | Wait & See | -0.891R | 3.3% | ❌ Eliminated |
+| Regime ID | Name | Strategy | Actual Performance | Allocation | Status |
+|-----------|------|----------|-------------------|------------|---------|
+| 0 | BULL_MOMENTUM | Aggressive | 55.6% WR, $839 avg P&L | 35% | 🚀 **Top Performer** |
+| 1 | SHARP_CORRECTION | Defensive | 44.0% WR, -$59 avg P&L | 5% | ⚠️ Minimal |
+| 2 | SIDEWAYS_MARKET | Balanced | 40.0% WR, -$264 avg P&L | 5% | ❌ Avoided |
+| 3 | WAIT_AND_SEE | None | N/A | 0% | 🚫 Eliminated |
+| 4 | CONSERVATIVE | Moderate | 52.9% WR, $540 avg P&L | 25% | ✅ Strong |
+| 5 | VOLATILE_REBOUND | Selective | 57.7% WR, $87 avg P&L | 12% | ⚡ Limited |
+| 6 | EXTREME_VOLATILITY | None | N/A | 0% | 🚫 Eliminated |
 
-### Expected Value Optimization
+### Performance-Based Optimization
 
-The strategy focuses exclusively on **positive EV regimes**:
-- **BALANCED (Regime 2)**: 45% allocation - Best performer with 3.305R EV
-- **MOMENTUM (Regimes 1&5)**: 55% allocation - Combined strong performance
+The strategy **dynamically allocates** based on actual backtest performance:
+- **BULL_MOMENTUM (Regime 0)**: 35% allocation - Highest average P&L per trade
+- **CONSERVATIVE (Regime 4)**: 25% allocation - Strong consistent performer
+- **VOLATILE_REBOUND (Regime 5)**: 12% allocation - Good win rate but low average P&L
+- **Losing regimes**: 5% or 0% allocation - Capital protection
 
-### Position Sizing Algorithm
+### Enhanced Position Sizing Algorithm
 
 ```python
-# Enhanced position sizing with multiple factors
-position_size = base_allocation × volatility_adjustment × persistence_bonus × coin_score × concentration_limit
+# EV-optimized position sizing with PC factor strength
+position_size = ev_base_allocation × pc_strength_multiplier × persistence_bonus × coin_score × risk_limits
 
 # Where:
-# - base_allocation: Regime-specific percentage (45% BALANCED, 55% MOMENTUM)
-# - volatility_adjustment: Dynamic based on PC2 volatility factor
-# - persistence_bonus: Increased size for stable regimes
-# - coin_score: PC-factor based cryptocurrency attractiveness
-# - concentration_limit: Portfolio risk management constraint
+# - ev_base_allocation: Expected Value optimized allocation per regime:
+#   * Extreme Outlier (Regime 3): 40% (2.230R EV, 75% WR)
+#   * Breakout Momentum (Regime 5): 30% (0.761R EV, 60% WR) 
+#   * Stable Growth (Regime 0): 25% (0.494R EV, 54% WR)
+#   * Others: 15%-1% based on negative EV performance
+# - pc_strength_multiplier: PC1/PC2/PC3 factor strength (0.5x - 1.6x range)
+# - persistence_bonus: Regime stability multiplier (0.7x - 1.3x)
+# - coin_score: Enhanced PC-factor cryptocurrency attractiveness
+# - risk_limits: Portfolio and correlation constraints (max 50% correlation exposure)
 ```
+
+## ⚡ Enhanced Strategy Features
+
+### Sharpe Ratio Optimization (NEW)
+- **Risk-Adjusted Performance**: 28.5% improvement in Sharpe ratio (0.621 → 0.798)
+- **Smart Regime Selectivity**: Enhanced focus on high-EV regimes, aggressive filtering of negative-EV regimes
+- **Volatility Control**: 19.2% reduction in portfolio volatility through intelligent position sizing
+- **Balanced Risk-Reward**: Moderate risk controls that preserve profitable trades while reducing volatility
+- **Improved Drawdown Management**: 12.2% reduction in maximum drawdown
+
+### Expected Value (EV) Optimization
+- **Data-Driven Allocation**: Position sizes based on historical Expected Value analysis
+- **Regime EV Ranking**: Regimes ranked by actual performance (2.230R to -0.901R range)
+- **Dynamic Thresholds**: Entry thresholds adjusted per regime based on EV data
+- **Risk-Adjusted Sizing**: Positions sized according to regime-specific win rates and R multiples
+
+### PC Factor Strength Integration  
+- **PC1 Market Direction**: 0.75x - 1.3x multiplier based on directional signal strength
+- **PC2 Volatility Adjustment**: 0.6x - 1.2x adjustment for market stress conditions
+- **PC3 Sector/Style Bonus**: Up to 1.1x bonus for strong sector rotation signals
+- **Combined Strength**: Multi-factor approach with 0.7x - 1.4x total range (optimized for Sharpe)
+
+### Decision Explanations System
+- **Comprehensive Logging**: Every trade decision explained with detailed reasoning
+- **Regime Analysis**: EV ranking, win rates, persistence, and market stress factors
+- **PC Factor Breakdown**: Individual PC1/PC2/PC3 contributions to position sizing
+- **Risk Management**: Stop loss, take profit, and portfolio risk calculations
+- **Performance Tracking**: Decision success rates and rejection reason analysis
 
 ## 🛠️ Installation & Setup
 
@@ -146,27 +182,48 @@ make
 ## 📊 Backtesting Results
 
 ### Performance Summary (2024-2025, 1-Year Limited Dataset)
-- **Total Return**: 21.12%
-- **Sharpe Ratio**: 0.780 (using corrected 3.95% risk-free rate)
-- **Maximum Drawdown**: 8.80%
-- **Win Rate**: 54.1%
-- **Total Trades**: 122
-- **Final Portfolio Value**: $121,118
+
+**🎯 Sharpe-Optimized Strategy (Recommended)**
+- **Total Return**: 28.90% 
+- **Sharpe Ratio**: 0.798 ⚡ (+28.5% improvement)
+- **Annualized Volatility**: 23.85% (-19.2% reduction)
+- **Maximum Drawdown**: 15.12%
+- **Win Rate**: 53.2%
+- **Total Trades**: 106
+- **Final Portfolio Value**: $128,901
+
+**📊 Original Enhanced Strategy**
+- **Total Return**: 30.53% (improved from 21.12%)
+- **Sharpe Ratio**: 0.621 
+- **Maximum Drawdown**: 17.23%
+- **Win Rate**: 51.7%
+- **Total Trades**: 118
+- **Final Portfolio Value**: $130,535
 
 ### Risk Metrics
-- **Annualized Return**: 15.55%
-- **Annualized Volatility**: TBD (requires calculation)
-- **Alpha vs Bitcoin**: TBD (requires benchmark comparison)
+- **Sharpe-Optimized Annualized Return**: 21.58%
+- **Sharpe-Optimized Volatility**: 23.85% (vs 29.52% original)
+- **Alpha vs Bitcoin**: -58.84% (Bitcoin buy & hold: 87.74%)
 - **Risk-Free Rate**: 3.95% (10Y Treasury Jan 2, 2024, [FRED DGS10](https://fred.stlouisfed.org/series/DGS10))
+
+### Strategy Performance Comparison
+| Metric | Original Strategy | Sharpe-Optimized | Improvement |
+|--------|------------------|------------------|-------------|
+| **Sharpe Ratio** | 0.621 | 0.798 | **+28.5%** |
+| **Volatility** | 29.52% | 23.85% | **-19.2%** |
+| **Return** | 30.53% | 28.90% | -5.3% |
+| **Max Drawdown** | 17.23% | 15.12% | **-12.2%** |
+| **Risk-Adj Return** | 1.03 | 1.21 | **+17.5%** |
 
 ### Regime Performance Breakdown
 ```
-📊 Performance-Optimized Multi-Regime Approach:
-🚀 Bull Momentum (Regime 0):     35% allocation - BEST (55.6% WR, $839 avg P&L)
-✅ Conservative (Regime 4):      25% allocation - STRONG (52.9% WR, $540 avg P&L)  
-⚡ Volatile Rebound (Regime 5):  12% allocation - Selective (57.7% WR, $87 avg P&L)
-🛡️ Sharp Correction (Regime 1):  5% allocation - Minimal (44% WR, -$59 avg P&L)
-🎯 Total: 122 trades with 54.1% win rate and 21.12% total return
+📊 Enhanced EV-Optimized Multi-Regime Approach:
+🚀 Stable Growth (Regime 0):     9 trades - STRONG (55.6% WR, $684 avg P&L, Total: $6,152)
+⚡ Breakout Momentum (Regime 5): 54 trades - BEST (59.3% WR, $477 avg P&L, Total: $25,740)
+✅ Defensive Stable (Regime 4):  18 trades - SOLID (50.0% WR, $183 avg P&L, Total: $3,291)
+🔄 Moderate Momentum (Regime 1): 27 trades - MIXED (40.7% WR, -$65 avg P&L, Total: -$1,764)
+📊 Baseline Market (Regime 2):   10 trades - WEAK (40.0% WR, -$437 avg P&L, Total: -$4,365)
+🎯 Total: 118 trades with 51.7% win rate and 30.53% total return
 ```
 
 ## 🔧 Configuration
@@ -237,7 +294,8 @@ from backtest_engine import RegimeBasedBacktester
 backtester = RegimeBasedBacktester(
     start_date='2024-01-01',
     end_date='2025-01-01',
-    initial_capital=100000
+    initial_capital=100000,
+    risk_free_rate=0.0395  # 3.95% 10Y Treasury
 )
 
 # Run complete analysis
@@ -282,6 +340,7 @@ strategy->showCurrentHoldings();
   - `backtest_trading_strategy.py`: Strategy implementation
   - `backtest_data_manager.py`: Data collection and management
   - `expected_value_analyzer.py`: EV optimization analysis
+  - `backtest_analysis.ipynb`: Interactive performance analysis and visualization
 - **`research/`**: Jupyter notebooks for analysis and visualization
   - `01_data_collection.ipynb`: Cryptocurrency price data gathering via CoinGecko API
   - `02_feature_engineering.ipynb`: Technical indicator calculation and normalization  

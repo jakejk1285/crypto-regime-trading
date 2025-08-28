@@ -4,7 +4,21 @@
       "Bash(tree:*)",
       "Bash(ls:*)",
       "Bash(mv:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(python:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(git fetch:*)",
+      "Bash(timeout:*)",
+      "Bash(rm:*)",
+      "Bash(echo)",
+      "Bash(grep:*)",
+      "Bash(sed:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(git push:*)",
+      "Bash(jupyter nbconvert:*)",
+      "Bash(pkill:*)"
     ],
     "deny": []
   }

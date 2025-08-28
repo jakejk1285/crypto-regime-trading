@@ -24,7 +24,8 @@ class RegimeBasedBacktester:
     """
 
     def __init__(self, start_date: str = '2024-01-01', end_date: str = '2025-01-01',
-                 initial_capital: float = 100000, risk_free_rate: float = 0.0395):
+                 initial_capital: float = 100000, risk_free_rate: float = 0.0395, 
+                 enable_decision_explanations: bool = False):
         self.start_date = pd.to_datetime(start_date)
         self.end_date = pd.to_datetime(end_date)
         self.initial_capital = initial_capital
@@ -32,7 +33,8 @@ class RegimeBasedBacktester:
 
         # Initialize components
         self.data_manager = CryptoDataManager(start_date, end_date)
-        self.trading_strategy = RegimeBasedTradingStrategy(initial_capital)
+        self.strategy = RegimeBasedTradingStrategy(initial_capital, enable_decision_explanations=enable_decision_explanations)
+        self.trading_strategy = self.strategy  # Backward compatibility
 
         # Data storage
         self.crypto_data = {}

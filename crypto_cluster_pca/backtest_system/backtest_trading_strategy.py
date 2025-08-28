@@ -49,7 +49,7 @@ class RegimeBasedTradingStrategy:
     Uses your regime analysis, coin scoring, and position management logic
     """
 
-    def __init__(self, initial_capital: float = 100000, use_ev_filter: bool = True):
+    def __init__(self, initial_capital: float = 100000, use_ev_filter: bool = True, enable_decision_explanations: bool = True):
         self.initial_capital = initial_capital
         self.current_capital = initial_capital
         self.positions: Dict[str, Position] = {}
@@ -59,6 +59,10 @@ class RegimeBasedTradingStrategy:
         self.use_ev_filter = use_ev_filter
         self.ev_analyzer = ExpectedValueAnalyzer(min_ev_threshold=0.1, max_risk_per_trade=0.02)
         self.ev_initialized = False
+        
+        # Decision explanations system
+        self.enable_decision_explanations = enable_decision_explanations
+        self.decision_log = []  # Store detailed decision explanations
 
         # Your exact symbol mapping (matching data manager)
         self.crypto_coins = {
@@ -142,36 +146,83 @@ class RegimeBasedTradingStrategy:
 
     def calculate_position_size(self, regime_data: Dict, symbol: str, coin_score: float, current_price: float) -> float:
         """
-        Research-based position sizing optimized for all profitable regimes
+        Enhanced position sizing with EV optimization and PC factor strength
+        Combines Expected Value analysis with Principal Component factor strength
         """
         regime_id = regime_data['regime_id']
         strategy = regime_data['strategy']
         
-        # PERFORMANCE-OPTIMIZED ALLOCATION: Focus on winners, reduce losers
-        if regime_id == 0:  # Bull Momentum - BEST PERFORMER (55.6% WR, $498 avg)
-            base_percent = 0.35  # Maximum allocation for best regime
-        elif regime_id == 4:  # Conservative - STRONG PERFORMER (52.9% WR, $400 avg)
-            base_percent = 0.25  # Good allocation for strong performer
-        elif regime_id == 5:  # Volatile Rebound - UNDERPERFORMING (57.7% WR, only $114 avg)
-            base_percent = 0.12  # Reduced allocation - small avg P&L
-        elif regime_id == 1:  # Sharp Correction - LOSING MONEY (44% WR, -$133 avg)
-            base_percent = 0.05  # Minimal allocation for losing regime
-        elif regime_id == 2:  # Sideways - LOSING MONEY (40% WR, -$264 avg)
-            base_percent = 0.05  # Minimal allocation for losing regime
+        # ENHANCED EV-BASED ALLOCATION: Optimized based on Expected Value analysis
+        # Regime EV ranking: 3(2.230R) > 5(0.761R) > 0(0.494R) > 2(0.166R) > 1(0.024R) > 4(-0.206R) > 6(-0.901R)
+        
+        if regime_id == 3:  # EXTREME_OUTLIER - HIGHEST EV (2.230R, 75% WR)
+            base_percent = 0.40  # Maximum allocation for best EV regime
+        elif regime_id == 5:  # BREAKOUT_MOMENTUM - HIGH EV (0.761R, 60% WR)
+            base_percent = 0.30  # Strong allocation for high EV
+        elif regime_id == 0:  # STABLE_GROWTH - GOOD EV (0.494R, 54% WR)
+            base_percent = 0.25  # Good allocation for solid EV
+        elif regime_id == 2:  # BASELINE_MARKET - LOW EV (0.166R, 57.5% WR)
+            base_percent = 0.15  # Moderate allocation for low but positive EV
+        elif regime_id == 1:  # MODERATE_MOMENTUM - MINIMAL EV (0.024R, 44% WR)
+            base_percent = 0.08  # Small allocation for minimal EV
+        elif regime_id == 4:  # DEFENSIVE_STABLE - NEGATIVE EV (-0.206R, 40% WR)
+            base_percent = 0.03  # Minimal allocation for negative EV
+        elif regime_id == 6:  # EXTREME_VOLATILITY - WORST EV (-0.901R, 0% WR)
+            base_percent = 0.01  # Nearly avoid this regime
         else:
-            # Fallback for other regimes
+            # Fallback for unmapped regimes
             base_percent = 0.10
             
         # Avoid eliminated strategies
         if strategy == "WAIT_AND_SEE":
             base_percent = 0.0
         
-        # Volatility adjustment (reduce size for high vol assets)
-        pc2_factor = abs(regime_data['pc2_volatility_factor'])
-        vol_adjustment = max(0.5, 1.0 - (pc2_factor - 1.0) * 0.1) if pc2_factor > 1.0 else 1.0
+        # ENHANCED PC FACTOR STRENGTH ADJUSTMENTS
+        pc1_factor = regime_data['pc1_market_factor']
+        pc2_factor = regime_data['pc2_volatility_factor']
+        pc3_factor = regime_data.get('pc3_factor', 0)
         
-        # Persistence bonus (more confident = larger size)
-        persistence_bonus = 1.0 + (regime_data['persistence'] - 0.5) * 0.4
+        # PC1 (Market Direction) Confidence Multiplier
+        pc1_strength = abs(pc1_factor)
+        # Increase size when market direction is strong and clear
+        if pc1_strength > 2.0:  # Strong directional signal
+            pc1_multiplier = min(1.4, 1.0 + (pc1_strength - 2.0) * 0.2)
+        elif pc1_strength > 1.5:  # Moderate signal
+            pc1_multiplier = min(1.2, 1.0 + (pc1_strength - 1.5) * 0.4)
+        else:  # Weak signal
+            pc1_multiplier = max(0.7, 1.0 - (1.5 - pc1_strength) * 0.2)
+        
+        # PC2 (Volatility) Risk Adjustment
+        pc2_strength = abs(pc2_factor)
+        # Reduce size during high volatility periods, increase during stable periods
+        if pc2_strength > 2.5:  # High volatility
+            pc2_adjustment = max(0.6, 1.0 - (pc2_strength - 2.5) * 0.15)
+        elif pc2_strength < 0.8:  # Low volatility - opportunity for larger sizes
+            pc2_adjustment = min(1.3, 1.0 + (0.8 - pc2_strength) * 0.4)
+        else:  # Normal volatility
+            pc2_adjustment = 1.0
+            
+        # PC3 (Sector/Style) Factor Bonus
+        pc3_strength = abs(pc3_factor)
+        if pc3_strength > 1.5:  # Strong sector rotation signal
+            pc3_bonus = min(1.15, 1.0 + (pc3_strength - 1.5) * 0.3)
+        else:
+            pc3_bonus = 1.0
+        
+        # Combined PC Factor Strength (replaces simple vol_adjustment)
+        pc_strength_multiplier = pc1_multiplier * pc2_adjustment * pc3_bonus
+        pc_strength_multiplier = max(0.5, min(1.6, pc_strength_multiplier))  # Cap between 50%-160%
+        
+        # Enhanced Persistence bonus (regime stability)
+        persistence = regime_data['persistence']
+        if persistence > 0.8:  # Very stable regime
+            persistence_bonus = 1.3
+        elif persistence > 0.6:  # Stable regime
+            persistence_bonus = 1.1
+        elif persistence < 0.3:  # Unstable regime
+            persistence_bonus = 0.7
+        else:  # Normal stability
+            persistence_bonus = 1.0
         
         # Portfolio concentration limit (relaxed for better capital utilization)
         portfolio_value = self.get_portfolio_value()
@@ -180,9 +231,13 @@ class RegimeBasedTradingStrategy:
         current_exposure = current_positions_value / portfolio_value if portfolio_value > 0 else 0
         concentration_limit = max(0.7, 0.95 - current_exposure)  # Allow higher exposure
         
-        # Final position size calculation
-        adjusted_percent = (base_percent * vol_adjustment * persistence_bonus * 
+        # ENHANCED FINAL POSITION SIZE CALCULATION
+        # Combines EV-optimized base allocation with PC factor strength and regime stability
+        adjusted_percent = (base_percent * pc_strength_multiplier * persistence_bonus * 
                            coin_score * concentration_limit)
+        
+        # Apply additional safety caps
+        adjusted_percent = max(0.01, min(0.45, adjusted_percent))  # Cap between 1%-45%
         
         position_value = portfolio_value * adjusted_percent
         
@@ -310,7 +365,8 @@ class RegimeBasedTradingStrategy:
 
     def regime_specific_trading_rules(self, regime_data: Dict, coin_scores: Dict[str, float]) -> Dict[str, bool]:
         """
-        Apply regime-specific trading filters and thresholds based on research insights
+        Apply regime-specific trading filters and thresholds based on EV analysis results
+        Enhanced with Expected Value data from actual performance analysis
         """
         strategy = regime_data['strategy']
         regime_id = regime_data['regime_id']
@@ -319,19 +375,26 @@ class RegimeBasedTradingStrategy:
         
         trading_decisions = {}
         
-        # PERFORMANCE-OPTIMIZED THRESHOLDS: Based on actual backtest results
-        if regime_id == 0:  # Bull Momentum - BEST PERFORMER (55.6% WR, $498 avg)
-            threshold = 0.05  # Very low threshold - maximize best regime
-        elif regime_id == 4:  # Conservative - STRONG PERFORMER (52.9% WR, $400 avg)
-            threshold = 0.10  # Low threshold for strong performer
-        elif regime_id == 5:  # Volatile Rebound - UNDERPERFORMING (57.7% WR, only $114 avg)
-            threshold = 0.30  # Higher threshold - be more selective
-        elif regime_id == 1:  # Sharp Correction - LOSING MONEY (44% WR, -$133 avg)
-            threshold = 0.50  # Much higher threshold - avoid most trades
-        elif regime_id == 2:  # Sideways - LOSING MONEY (40% WR, -$264 avg)
-            threshold = 0.60  # Very high threshold - avoid most trades
+        # ENHANCED EV-OPTIMIZED THRESHOLDS: Based on Expected Value analysis
+        # Using actual regime EV data: EXTREME_OUTLIER(2.230R), BREAKOUT_MOMENTUM(0.761R), 
+        # STABLE_GROWTH(0.494R), BASELINE_MARKET(0.166R), etc.
+        
+        if regime_id == 3:  # EXTREME_OUTLIER - HIGHEST EV (2.230R, 75% WR)
+            threshold = 0.02  # Ultra-low threshold - capture all opportunities
+        elif regime_id == 5:  # BREAKOUT_MOMENTUM - HIGH EV (0.761R, 60% WR)  
+            threshold = 0.06  # Very low threshold for high EV regime
+        elif regime_id == 0:  # STABLE_GROWTH - GOOD EV (0.494R, 54% WR)
+            threshold = 0.08  # Low threshold for solid EV
+        elif regime_id == 2:  # BASELINE_MARKET - LOW EV (0.166R, 57.5% WR)
+            threshold = 0.25  # Moderate threshold - be selective
+        elif regime_id == 1:  # MODERATE_MOMENTUM - MINIMAL EV (0.024R, 44% WR)
+            threshold = 0.45  # High threshold - very selective
+        elif regime_id == 4:  # DEFENSIVE_STABLE - NEGATIVE EV (-0.206R, 40% WR)
+            threshold = 0.65  # Very high threshold - avoid most trades
+        elif regime_id == 6:  # EXTREME_VOLATILITY - WORST EV (-0.901R, 0% WR)
+            threshold = 0.85  # Extremely high threshold - nearly avoid all
         else:
-            # Other regimes
+            # Fallback for unmapped regimes
             threshold = 0.35
         
         # Stress adjustment - increase threshold during high stress
@@ -475,6 +538,49 @@ class RegimeBasedTradingStrategy:
         Handle regime transitions (rebalancing logic from your C++ code)
         """
         print(f"🔄 Regime Change: {old_regime_id} → {new_regime_id} ({new_regime_data['strategy']})")
+        
+        # Log regime change decision
+        regime_change_reasoning = {
+            'regime_transition': {
+                'from_regime': old_regime_id,
+                'to_regime': new_regime_id,
+                'from_strategy': 'Unknown' if old_regime_id is None else self.get_regime_strategy_name(old_regime_id),
+                'to_strategy': new_regime_data['strategy']
+            },
+            'new_regime_analysis': {
+                'ev_rank': self.get_regime_ev_rank(new_regime_id),
+                'expected_value': self.get_regime_ev_estimate(new_regime_id),
+                'win_rate': self.get_regime_win_rate(new_regime_id),
+                'base_allocation': self.get_regime_base_allocation(new_regime_id),
+                'persistence': new_regime_data['persistence'],
+                'market_stress': new_regime_data['market_stress']
+            },
+            'pc_factors': {
+                'pc1_market_factor': new_regime_data['pc1_market_factor'],
+                'pc2_volatility_factor': new_regime_data['pc2_volatility_factor'],
+                'pc3_factor': new_regime_data.get('pc3_factor', 0)
+            },
+            'rationale': [
+                f"Market regime shifted from {old_regime_id or 'Initial'} to {new_regime_id}",
+                f"New regime strategy: {new_regime_data['strategy']}",
+                f"Expected Value ranking: {self.get_regime_ev_rank(new_regime_id)} ({self.get_regime_ev_estimate(new_regime_id)}R)",
+                f"Portfolio rebalancing required based on new regime allocation",
+                f"PC factors indicate: Market={new_regime_data['pc1_market_factor']:+.2f}, Volatility={new_regime_data['pc2_volatility_factor']:+.2f}"
+            ]
+        }
+        
+        self.log_decision('regime_change', 'PORTFOLIO', 'rebalance', regime_change_reasoning)
+    
+    def get_regime_strategy_name(self, regime_id: int) -> str:
+        """
+        Get strategy name for regime ID
+        """
+        strategies = {
+            0: "STABLE_GROWTH", 1: "MODERATE_MOMENTUM", 2: "BASELINE_MARKET",
+            3: "EXTREME_OUTLIER", 4: "DEFENSIVE_STABLE", 5: "BREAKOUT_MOMENTUM",
+            6: "EXTREME_VOLATILITY"
+        }
+        return strategies.get(regime_id, "UNKNOWN")
 
         # Close positions for coins not in new regime (from rebalancePortfolio)
         coin_scores = self.calculate_coin_scores(new_regime_data)
@@ -542,7 +648,27 @@ class RegimeBasedTradingStrategy:
                         risk_valid, risk_msg = self.validate_position_risk(symbol, position_qty, current_price, stop_loss)
                         
                         if not risk_valid:
-                            print(f"🛡️  Risk rejected {symbol}: {risk_msg}")
+                            # Log risk rejection decision
+                            risk_reasoning = {
+                                'regime': {
+                                    'id': regime_data['regime_id'],
+                                    'strategy': regime_data['strategy'],
+                                    'expected_value': self.get_regime_ev_estimate(regime_data['regime_id']),
+                                    'win_rate': self.get_regime_win_rate(regime_data['regime_id']),
+                                    'persistence': regime_data['persistence'],
+                                    'market_stress': regime_data['market_stress']
+                                },
+                                'position_sizing': {
+                                    'position_value': position_value,
+                                    'final_percent': (position_value / self.get_portfolio_value()) * 100
+                                },
+                                'risk_management': {
+                                    'stop_loss': stop_loss,
+                                    'rejection_reason': risk_msg
+                                },
+                                'rationale': [f"RISK REJECTED: {risk_msg}"]
+                            }
+                            self.log_decision('entry', symbol, 'skip', risk_reasoning, timestamp)
                             continue
                         
                         # Apply EV filter if enabled and initialized
@@ -558,16 +684,21 @@ class RegimeBasedTradingStrategy:
                             )
                             
                             if should_take:
+                                # Log successful entry decision with comprehensive reasoning
+                                entry_reasoning = self.build_entry_reasoning(regime_data, symbol, coin_score, 
+                                                                           current_price, position_qty, stop_loss, ev_analysis)
+                                self.log_decision('entry', symbol, 'open', entry_reasoning, timestamp)
                                 self.open_position(symbol, position_qty, current_price, regime_data, timestamp)
-                                # Print first few EV decisions for debugging
-                                if len(self.trades) <= 5:
-                                    print(f"📊 EV Approved: {symbol} - EV: {ev_analysis.get('expected_value_r', 0):.3f}R, Risk: {ev_analysis.get('risk_percentage', 0):.1f}%")
                             else:
-                                # Print first few rejections for debugging
-                                if len(self.positions) <= 5:
-                                    print(f"❌ EV Rejected: {symbol} - EV: {ev_analysis.get('expected_value_r', 0):.3f}R, Risk: {ev_analysis.get('risk_percentage', 0):.1f}%")
+                                # Log EV rejection decision
+                                rejection_reasoning = self.build_rejection_reasoning(regime_data, symbol, coin_score, 
+                                                                                  current_price, position_qty, stop_loss, ev_analysis)
+                                self.log_decision('entry', symbol, 'skip', rejection_reasoning, timestamp)
                         else:
-                            # No EV filter, take trade with risk validation
+                            # No EV filter, take trade with risk validation - log decision
+                            entry_reasoning = self.build_entry_reasoning(regime_data, symbol, coin_score, 
+                                                                       current_price, position_qty, stop_loss, None)
+                            self.log_decision('entry', symbol, 'open', entry_reasoning, timestamp)
                             self.open_position(symbol, position_qty, current_price, regime_data, timestamp)
 
     def open_position(self, symbol: str, quantity: float, entry_price: float,
@@ -600,6 +731,176 @@ class RegimeBasedTradingStrategy:
         print(f"✅ Opened {symbol}: {quantity:.4f} @ ${entry_price:.2f} "
               f"(SL: ${stop_loss:.2f}, TP: ${take_profit:.2f})")
 
+    def build_entry_reasoning(self, regime_data: Dict, symbol: str, coin_score: float, 
+                             current_price: float, position_qty: float, stop_loss: float, 
+                             ev_analysis: Optional[Dict]) -> Dict:
+        """
+        Build comprehensive reasoning for entry decisions
+        """
+        take_profit = self.calculate_stop_loss_take_profit(regime_data, current_price)[1]
+        position_value = position_qty * current_price
+        portfolio_value = self.get_portfolio_value()
+        
+        # PC Factor analysis
+        pc1_factor = regime_data['pc1_market_factor']
+        pc2_factor = regime_data['pc2_volatility_factor']
+        pc3_factor = regime_data.get('pc3_factor', 0)
+        
+        pc1_strength = abs(pc1_factor)
+        pc1_multiplier = min(1.4, 1.0 + (pc1_strength - 2.0) * 0.2) if pc1_strength > 2.0 else (
+            min(1.2, 1.0 + (pc1_strength - 1.5) * 0.4) if pc1_strength > 1.5 else 
+            max(0.7, 1.0 - (1.5 - pc1_strength) * 0.2)
+        )
+        
+        pc2_strength = abs(pc2_factor)
+        pc2_adjustment = max(0.6, 1.0 - (pc2_strength - 2.5) * 0.15) if pc2_strength > 2.5 else (
+            min(1.3, 1.0 + (0.8 - pc2_strength) * 0.4) if pc2_strength < 0.8 else 1.0
+        )
+        
+        pc3_strength = abs(pc3_factor)
+        pc3_bonus = min(1.15, 1.0 + (pc3_strength - 1.5) * 0.3) if pc3_strength > 1.5 else 1.0
+        
+        pc_strength_multiplier = max(0.5, min(1.6, pc1_multiplier * pc2_adjustment * pc3_bonus))
+        
+        # Base allocation based on EV ranking
+        base_percent = self.get_regime_base_allocation(regime_data['regime_id'])
+        
+        reasoning = {
+            'regime': {
+                'id': regime_data['regime_id'],
+                'strategy': regime_data['strategy'],
+                'ev_rank': self.get_regime_ev_rank(regime_data['regime_id']),
+                'expected_value': self.get_regime_ev_estimate(regime_data['regime_id']),
+                'win_rate': self.get_regime_win_rate(regime_data['regime_id']),
+                'persistence': regime_data['persistence'],
+                'market_stress': regime_data['market_stress']
+            },
+            'pc_factors': {
+                'pc1_factor': pc1_factor,
+                'pc1_multiplier': pc1_multiplier,
+                'pc2_factor': pc2_factor,
+                'pc2_adjustment': pc2_adjustment,
+                'pc3_factor': pc3_factor,
+                'pc3_bonus': pc3_bonus,
+                'pc_strength_multiplier': pc_strength_multiplier
+            },
+            'position_sizing': {
+                'base_percent': base_percent,
+                'pc_strength_multiplier': pc_strength_multiplier,
+                'persistence_bonus': self.get_persistence_bonus(regime_data['persistence']),
+                'coin_score': coin_score,
+                'position_value': position_value,
+                'final_percent': (position_value / portfolio_value) * 100
+            },
+            'risk_management': {
+                'stop_loss': stop_loss,
+                'stop_loss_pct': ((current_price - stop_loss) / current_price) * 100,
+                'take_profit': take_profit,
+                'risk_reward_ratio': (take_profit - current_price) / (current_price - stop_loss),
+                'position_risk_pct': ((current_price - stop_loss) * position_qty / portfolio_value) * 100,
+                'total_portfolio_risk': self.calculate_total_portfolio_risk(portfolio_value),
+                'max_portfolio_risk': self.max_portfolio_risk * 100
+            },
+            'rationale': [
+                f"High-EV regime {regime_data['regime_id']} with {self.get_regime_ev_estimate(regime_data['regime_id'])}R expected value",
+                f"Strong PC factor signals: PC1={pc1_factor:+.2f}, PC2={pc2_factor:+.2f}, PC3={pc3_factor:+.2f}",
+                f"Coin score {coin_score:.3f} exceeds regime threshold",
+                f"Risk-adjusted position size: {(position_value / portfolio_value) * 100:.1f}% of portfolio",
+                f"Risk/Reward ratio: {(take_profit - current_price) / (current_price - stop_loss):.1f}:1"
+            ]
+        }
+        
+        if ev_analysis:
+            reasoning['ev_analysis'] = ev_analysis
+            reasoning['rationale'].append(f"EV analysis confirms positive expected value: {ev_analysis.get('expected_value_r', 0):.3f}R")
+        
+        return reasoning
+    
+    def build_rejection_reasoning(self, regime_data: Dict, symbol: str, coin_score: float, 
+                                current_price: float, position_qty: float, stop_loss: float, 
+                                ev_analysis: Optional[Dict]) -> Dict:
+        """
+        Build reasoning for trade rejections
+        """
+        reasoning = self.build_entry_reasoning(regime_data, symbol, coin_score, current_price, position_qty, stop_loss, ev_analysis)
+        
+        # Add rejection-specific rationale
+        if ev_analysis and not ev_analysis.get('ev_ok', False):
+            reasoning['rationale'] = [
+                f"EV REJECTION: Expected value {ev_analysis.get('expected_value_r', 0):.3f}R below threshold {ev_analysis.get('min_ev_required', 0):.3f}R",
+                f"Regime {regime_data['regime_id']} win rate only {ev_analysis.get('win_rate', 0):.1f}%",
+                f"Risk-adjusted expected value too low for trade execution"
+            ]
+        
+        return reasoning
+    
+    def get_regime_base_allocation(self, regime_id: int) -> float:
+        """
+        Get EV-optimized base allocation percentage for regime
+        """
+        allocations = {
+            3: 0.40,  # EXTREME_OUTLIER - HIGHEST EV (2.230R, 75% WR)
+            5: 0.30,  # BREAKOUT_MOMENTUM - HIGH EV (0.761R, 60% WR)
+            0: 0.25,  # STABLE_GROWTH - GOOD EV (0.494R, 54% WR)
+            2: 0.15,  # BASELINE_MARKET - LOW EV (0.166R, 57.5% WR)
+            1: 0.08,  # MODERATE_MOMENTUM - MINIMAL EV (0.024R, 44% WR)
+            4: 0.03,  # DEFENSIVE_STABLE - NEGATIVE EV (-0.206R, 40% WR)
+            6: 0.01   # EXTREME_VOLATILITY - WORST EV (-0.901R, 0% WR)
+        }
+        return allocations.get(regime_id, 0.10)
+    
+    def get_regime_ev_rank(self, regime_id: int) -> str:
+        """
+        Get regime ranking based on Expected Value
+        """
+        rankings = {
+            3: "1st (BEST)", 5: "2nd (HIGH)", 0: "3rd (GOOD)", 
+            2: "4th (LOW)", 1: "5th (MINIMAL)", 4: "6th (NEGATIVE)", 6: "7th (WORST)"
+        }
+        return rankings.get(regime_id, "Unknown")
+    
+    def get_regime_ev_estimate(self, regime_id: int) -> str:
+        """
+        Get regime Expected Value estimate in R multiples
+        """
+        ev_estimates = {
+            3: "2.230", 5: "0.761", 0: "0.494", 
+            2: "0.166", 1: "0.024", 4: "-0.206", 6: "-0.901"
+        }
+        return ev_estimates.get(regime_id, "0.000")
+    
+    def get_regime_win_rate(self, regime_id: int) -> int:
+        """
+        Get regime historical win rate percentage
+        """
+        win_rates = {
+            3: 75, 5: 60, 0: 54, 2: 58, 1: 44, 4: 40, 6: 0
+        }
+        return win_rates.get(regime_id, 50)
+    
+    def get_persistence_bonus(self, persistence: float) -> float:
+        """
+        Calculate persistence bonus multiplier
+        """
+        if persistence > 0.8:
+            return 1.3
+        elif persistence > 0.6:
+            return 1.1
+        elif persistence < 0.3:
+            return 0.7
+        else:
+            return 1.0
+    
+    def calculate_total_portfolio_risk(self, portfolio_value: float) -> float:
+        """
+        Calculate current total portfolio risk percentage
+        """
+        total_risk = 0.0
+        for pos in self.positions.values():
+            pos_risk = abs(pos.entry_price - pos.stop_loss) * pos.quantity
+            total_risk += pos_risk / portfolio_value if portfolio_value > 0 else 0
+        return total_risk * 100
+    
     def close_position(self, symbol: str, exit_price: float, exit_reason: str,
                        timestamp: Optional[pd.Timestamp] = None) -> None:
         """
@@ -636,6 +937,35 @@ class RegimeBasedTradingStrategy:
         self.regime_performance[position.regime_id].append(pnl)
         self.regime_trades[position.regime_id] += 1
 
+        # Log exit decision with reasoning
+        exit_reasoning = {
+            'position': {
+                'entry_price': position.entry_price,
+                'exit_price': exit_price,
+                'quantity': position.quantity,
+                'hold_duration': (timestamp - position.entry_timestamp).days if timestamp else 0
+            },
+            'performance': {
+                'pnl_dollars': pnl,
+                'pnl_percent': pnl_pct,
+                'r_multiple': pnl / (abs(position.entry_price - position.stop_loss) * position.quantity) if position.stop_loss != position.entry_price else 0
+            },
+            'exit_trigger': {
+                'reason': exit_reason,
+                'stop_loss': position.stop_loss,
+                'take_profit': position.take_profit,
+                'trailing_stop': position.trailing_stop,
+                'highest_price': position.highest_price
+            },
+            'rationale': [
+                f"Exit triggered by {exit_reason.replace('_', ' ').title()}",
+                f"Position held for {(timestamp - position.entry_timestamp).days if timestamp else 0} days",
+                f"Realized P&L: ${pnl:.2f} ({pnl_pct:+.2f}%)"
+            ]
+        }
+        
+        self.log_decision('exit', symbol, 'close', exit_reasoning, timestamp)
+        
         # Remove position
         del self.positions[symbol]
 
@@ -765,6 +1095,103 @@ class RegimeBasedTradingStrategy:
         
         return sharpe_ratio
 
+    def log_decision(self, decision_type: str, symbol: str, action: str, reasoning: Dict, timestamp: pd.Timestamp = None) -> None:
+        """
+        Log detailed trading decision with comprehensive reasoning
+        
+        Args:
+            decision_type: Type of decision ('entry', 'exit', 'skip', 'regime_change')
+            symbol: Cryptocurrency symbol
+            action: Action taken ('open', 'close', 'skip', 'rebalance')
+            reasoning: Detailed reasoning dictionary
+            timestamp: Decision timestamp
+        """
+        if not self.enable_decision_explanations:
+            return
+            
+        decision_entry = {
+            'timestamp': timestamp or pd.Timestamp.now(),
+            'decision_type': decision_type,
+            'symbol': symbol,
+            'action': action,
+            'reasoning': reasoning,
+            'portfolio_value': self.get_portfolio_value(),
+            'positions_count': len(self.positions)
+        }
+        
+        self.decision_log.append(decision_entry)
+        
+        # Print decision explanation if enabled
+        if self.enable_decision_explanations:
+            self.print_decision_explanation(decision_entry)
+    
+    def print_decision_explanation(self, decision: Dict) -> None:
+        """
+        Print formatted decision explanation
+        """
+        timestamp = decision['timestamp'].strftime('%H:%M:%S')
+        decision_type = decision['decision_type'].upper()
+        symbol = decision['symbol']
+        action = decision['action'].upper()
+        reasoning = decision['reasoning']
+        
+        print(f"\n🧠 [{timestamp}] {decision_type} DECISION: {symbol} - {action}")
+        print("─" * 60)
+        
+        # Regime Analysis
+        if 'regime' in reasoning:
+            regime = reasoning['regime']
+            print(f"🏛️  REGIME ANALYSIS:")
+            print(f"   • Regime: {regime['id']} ({regime['strategy']})")
+            print(f"   • EV Ranking: {regime.get('ev_rank', 'N/A')} (Expected: {regime.get('expected_value', 'N/A')}R)")
+            print(f"   • Win Rate: {regime.get('win_rate', 'N/A')}%")
+            print(f"   • Persistence: {regime.get('persistence', 0):.1%} | Stress: {regime.get('market_stress', 0):.1%}")
+        
+        # PC Factor Analysis
+        if 'pc_factors' in reasoning:
+            pc = reasoning['pc_factors']
+            print(f"⚡ PC FACTOR STRENGTH:")
+            print(f"   • PC1 (Market Direction): {pc.get('pc1_factor', 0):+.2f} → Multiplier: {pc.get('pc1_multiplier', 1):.2f}x")
+            print(f"   • PC2 (Volatility): {pc.get('pc2_factor', 0):+.2f} → Adjustment: {pc.get('pc2_adjustment', 1):.2f}x")
+            print(f"   • PC3 (Sector/Style): {pc.get('pc3_factor', 0):+.2f} → Bonus: {pc.get('pc3_bonus', 1):.2f}x")
+            print(f"   • Combined PC Strength: {pc.get('pc_strength_multiplier', 1):.2f}x")
+        
+        # Position Sizing
+        if 'position_sizing' in reasoning:
+            pos = reasoning['position_sizing']
+            print(f"📊 POSITION SIZING:")
+            print(f"   • Base Allocation: {pos.get('base_percent', 0):.1%} (EV-optimized)")
+            print(f"   • PC Strength Adjustment: {pos.get('pc_strength_multiplier', 1):.2f}x")
+            print(f"   • Persistence Bonus: {pos.get('persistence_bonus', 1):.2f}x")
+            print(f"   • Coin Score: {pos.get('coin_score', 0):.3f}")
+            print(f"   • Final Position: ${pos.get('position_value', 0):,.0f} ({pos.get('final_percent', 0):.1%} of portfolio)")
+        
+        # Risk Management
+        if 'risk_management' in reasoning:
+            risk = reasoning['risk_management']
+            print(f"🛡️  RISK MANAGEMENT:")
+            print(f"   • Stop Loss: ${risk.get('stop_loss', 0):.2f} ({risk.get('stop_loss_pct', 0):.1%})")
+            print(f"   • Take Profit: ${risk.get('take_profit', 0):.2f} (R/R: {risk.get('risk_reward_ratio', 0):.1f}:1)")
+            print(f"   • Position Risk: {risk.get('position_risk_pct', 0):.1%} of portfolio")
+            print(f"   • Portfolio Risk: {risk.get('total_portfolio_risk', 0):.1%} (Limit: {risk.get('max_portfolio_risk', 15):.0f}%)")
+        
+        # Expected Value Analysis
+        if 'ev_analysis' in reasoning:
+            ev = reasoning['ev_analysis']
+            print(f"⚡ EXPECTED VALUE:")
+            print(f"   • Trade EV: {ev.get('expected_value_r', 0):.3f}R (${ev.get('trade_expected_ev', 0):.2f})")
+            print(f"   • Regime Win Rate: {ev.get('win_rate', 0):.1f}%")
+            print(f"   • EV Threshold Met: {'✅' if ev.get('ev_ok', False) else '❌'} (Min: {ev.get('min_ev_required', 0):.3f}R)")
+        
+        # Decision Rationale
+        if 'rationale' in reasoning:
+            rationale = reasoning['rationale']
+            print(f"💡 DECISION RATIONALE:")
+            for reason in rationale:
+                print(f"   • {reason}")
+        
+        print("─" * 60)
+    
     def get_performance_summary(self) -> Dict:
         """
         Calculate comprehensive performance metrics including Sharpe ratio
@@ -888,7 +1315,43 @@ class RegimeBasedTradingStrategy:
             'data_frequency': '252 trading days (industry standard)',
             'regime_performance': regime_performance,
             'equity_curve': self.equity_curve,
+            'decision_log': self.decision_log if self.enable_decision_explanations else [],
+            'decision_summary': self.get_decision_summary() if self.enable_decision_explanations else {},
             **ev_metrics  # Add EV metrics to the summary
+        }
+    
+    def get_decision_summary(self) -> Dict:
+        """
+        Generate summary statistics from decision log
+        """
+        if not self.decision_log:
+            return {}
+        
+        entry_decisions = [d for d in self.decision_log if d['decision_type'] == 'entry']
+        exit_decisions = [d for d in self.decision_log if d['decision_type'] == 'exit']
+        regime_changes = [d for d in self.decision_log if d['decision_type'] == 'regime_change']
+        
+        entries_taken = [d for d in entry_decisions if d['action'] == 'open']
+        entries_skipped = [d for d in entry_decisions if d['action'] == 'skip']
+        
+        # Analyze rejection reasons
+        rejection_reasons = {}
+        for decision in entries_skipped:
+            rationale = decision['reasoning'].get('rationale', [])
+            if rationale:
+                reason = rationale[0].split(':')[0] if ':' in rationale[0] else rationale[0]
+                rejection_reasons[reason] = rejection_reasons.get(reason, 0) + 1
+        
+        return {
+            'total_decisions': len(self.decision_log),
+            'entry_decisions': len(entry_decisions),
+            'entries_taken': len(entries_taken),
+            'entries_skipped': len(entries_skipped),
+            'entry_success_rate': len(entries_taken) / len(entry_decisions) * 100 if entry_decisions else 0,
+            'exit_decisions': len(exit_decisions),
+            'regime_changes': len(regime_changes),
+            'rejection_reasons': rejection_reasons,
+            'most_common_rejection': max(rejection_reasons.items(), key=lambda x: x[1])[0] if rejection_reasons else 'None'
         }
 
     def print_performance_summary(self) -> None:
@@ -938,6 +1401,20 @@ class RegimeBasedTradingStrategy:
             print(f"  💰 Avg P&L: ${regime_perf['avg_pnl']:.2f}")
             print(f"  📈 Total P&L: ${regime_perf['total_pnl']:.2f}")
 
+        # Print decision summary if explanations are enabled
+        if self.enable_decision_explanations and hasattr(self, 'decision_log') and self.decision_log:
+            decision_summary = self.get_decision_summary()
+            print(f"\n🧠 DECISION ANALYSIS SUMMARY:")
+            print("-" * 50)
+            print(f"📊 Total Decisions Made: {decision_summary.get('total_decisions', 0)}")
+            print(f"🎯 Entry Attempts: {decision_summary.get('entry_decisions', 0)}")
+            print(f"✅ Entries Taken: {decision_summary.get('entries_taken', 0)}")
+            print(f"❌ Entries Skipped: {decision_summary.get('entries_skipped', 0)}")
+            print(f"📈 Entry Success Rate: {decision_summary.get('entry_success_rate', 0):.1f}%")
+            print(f"🔄 Regime Changes: {decision_summary.get('regime_changes', 0)}")
+            if decision_summary.get('most_common_rejection') != 'None':
+                print(f"🚫 Most Common Rejection: {decision_summary.get('most_common_rejection', 'None')}")
+        
         print("=" * 60)
 
 

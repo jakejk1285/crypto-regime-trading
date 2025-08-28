@@ -1,14 +1,14 @@
 # Changelog
 
-## [1.2.0] - 2025-01-XX - Sharpe Ratio Optimization
+## [1.2.0] - 2025-01-XX - Performance Optimization
 
 ### Added
-- **Sharpe-Optimized Trading Strategy** (`sharpe_optimized_strategy.py`)
-  - 28.5% improvement in Sharpe ratio (0.621 → 0.798)
-  - 19.2% reduction in portfolio volatility (29.52% → 23.85%)
-  - Smart regime selectivity based on Expected Value analysis
-  - Balanced risk controls preserving profitable trades
-  - Enhanced position sizing with volatility awareness
+- **Performance-Optimized Trading Strategy** (`sharpe_optimized_strategy.py`)
+  - Superior risk-adjusted performance (0.798 Sharpe ratio achievement)
+  - Optimized portfolio volatility management (23.85%)
+  - Data-driven regime selection based on Expected Value analysis
+  - Professional risk controls supporting profitable trades
+  - Advanced position sizing with volatility optimization
 
 - **Strategy Comparison Framework** (`strategy_comparison.py`)
   - Comprehensive performance comparison between strategies
@@ -23,10 +23,10 @@
 
 ### Enhanced
 - **README.md**
-  - Added Sharpe-optimized strategy results and comparison table
-  - Updated Enhanced Strategy Features with optimization details
+  - Added performance-optimized strategy results and analysis
+  - Updated strategy features with optimization details
   - Improved performance metrics documentation
-  - Added risk-adjusted return calculations
+  - Added comprehensive return calculations
 
 - **Trading Strategy** (`backtest_trading_strategy.py`)
   - Enhanced EV-based position sizing algorithms

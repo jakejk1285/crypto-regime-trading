@@ -15,10 +15,10 @@ A sophisticated cryptocurrency trading system that combines **machine learning-d
 ## 📊 Key Features
 
 ### Research & Analysis (Python)
-- **Performance Optimization**: Data-driven strategy optimization achieving 28.90% returns
+- **Performance Optimization**: Data-driven strategy optimization achieving 54.35% returns
 - **Regime Detection**: 7-regime market classification using PCA and K-means clustering
 - **Expected Value Analysis**: Statistical optimization of regime-based allocation decisions
-- **Risk Management**: Professional volatility control with 0.798 Sharpe ratio achievement
+- **Risk Management**: Professional volatility control with 1.437 Sharpe ratio achievement
 - **Feature Engineering**: 988+ technical indicators and market features
 - **Performance Analytics**: Comprehensive backtesting and regime attribution analysis
 
@@ -86,11 +86,11 @@ position_size = ev_base_allocation × pc_strength_multiplier × persistence_bonu
 ## ⚡ Performance-Optimized Strategy Features
 
 ### Data-Driven Portfolio Management
-- **Performance Optimization**: Strategy designed for superior returns (0.798 Sharpe ratio achievement)
-- **Smart Regime Selection**: Focus on high-performance regimes based on backtest analysis
-- **Intelligent Position Sizing**: Dynamic allocation maintaining optimal portfolio volatility (23.85%)
-- **Risk-Reward Balance**: Professional risk controls supporting profitable trade execution
-- **Drawdown Control**: Systematic risk management limiting maximum drawdown to 15.12%
+- **Performance Optimization**: Strategy achieving 0.621 Sharpe ratio
+- **Regime Selection**: Data-driven regime selection based on backtest analysis
+- **Dynamic Position Sizing**: Portfolio volatility of 24.21%
+- **Risk Controls**: Dynamic risk management with systematic trade execution
+- **Drawdown Management**: Maximum drawdown of 13.27%
 
 ### Expected Value (EV) Optimization
 - **Data-Driven Allocation**: Position sizes based on historical Expected Value analysis
@@ -110,6 +110,14 @@ position_size = ev_base_allocation × pc_strength_multiplier × persistence_bonu
 - **PC Factor Breakdown**: Individual PC1/PC2/PC3 contributions to position sizing
 - **Risk Management**: Stop loss, take profit, and portfolio risk calculations
 - **Performance Tracking**: Decision success rates and rejection reason analysis
+
+### Professional Risk Management Framework
+- **Multi-Metric Analysis**: 15+ professional trading statistics calculated in real-time
+- **Tail Risk Management**: VaR, Expected Shortfall, and extreme event modeling
+- **Distribution Analysis**: Skewness, kurtosis, and non-normality detection
+- **Drawdown Analytics**: Duration analysis and recovery period modeling
+- **Kelly Criterion Integration**: Mathematically optimal position sizing recommendations
+- **Rolling Performance Metrics**: 30-day volatility and Sharpe ratio monitoring
 
 ## 🛠️ Installation & Setup
 
@@ -177,29 +185,49 @@ make
 
 ### Performance Summary (2024-2025, 1-Year Limited Dataset)
 
-- **Total Return**: 28.90% 
-- **Sharpe Ratio**: 0.798 (excellent risk-adjusted performance)
-- **Annualized Return**: 21.58%
-- **Annualized Volatility**: 23.85% (controlled risk profile)
-- **Maximum Drawdown**: 15.12%
-- **Win Rate**: 53.2%
-- **Total Trades**: 106
-- **Final Portfolio Value**: $128,901
+- **Total Return**: 54.35% 
+- **Sharpe Ratio**: 1.437
+- **Annualized Return**: 38.75%
+- **Annualized Volatility**: 24.21%
+- **Maximum Drawdown**: 13.27%
+- **Win Rate**: 53.3%
+- **Total Trades**: 137
+- **Final Portfolio Value**: $154,346
+
+### Professional Trading Statistics
+
+**Advanced Risk Metrics:**
+- **Profit Factor**: 1.74
+- **Calmar Ratio**: 2.92
+- **Average Win**: $1,737.66 per winning trade
+- **Average Loss**: -$1,140.61 per losing trade
+- **Win/Loss Ratio**: 1.52
+
+**Value at Risk & Extreme Risk:**
+- **Trades per Month**: 11.2
+- **Duration**: 366 days
+- **Risk-Free Rate**: 3.95%
+
+**Trading Behavior Analytics:**
+- **Trade Expectancy**: $396.68 per trade
+- **Trading Frequency**: Daily rebalancing with regime-based decisions
+- **Position Management**: Trailing stops and take-profit optimization
 
 ### Risk Metrics
-- **Alpha vs Bitcoin**: -58.84% (Bitcoin buy & hold: 87.74%)
+- **Alpha vs Bitcoin**: -35.36% (Bitcoin buy & hold: 89.71%)
 - **Risk-Free Rate**: 3.95% (10Y Treasury Jan 2, 2024, [FRED DGS10](https://fred.stlouisfed.org/series/DGS10))
-- **Risk-Adjusted Return**: 1.21 return per unit of volatility
+- **Risk-Adjusted Return**: 1.60
+- **Volatility Control**: 24.21% annualized
 
 ### Regime Performance Breakdown
 ```
-📊 Enhanced EV-Optimized Multi-Regime Approach:
-🚀 Stable Growth (Regime 0):     9 trades - STRONG (55.6% WR, $684 avg P&L, Total: $6,152)
-⚡ Breakout Momentum (Regime 5): 54 trades - BEST (59.3% WR, $477 avg P&L, Total: $25,740)
-✅ Defensive Stable (Regime 4):  18 trades - SOLID (50.0% WR, $183 avg P&L, Total: $3,291)
-🔄 Moderate Momentum (Regime 1): 27 trades - MIXED (40.7% WR, -$65 avg P&L, Total: -$1,764)
-📊 Baseline Market (Regime 2):   10 trades - WEAK (40.0% WR, -$437 avg P&L, Total: -$4,365)
-🎯 Total: 118 trades with 51.7% win rate and 30.53% total return
+📊 Performance-Optimized Multi-Regime Approach:
+🚀 Stable Growth (Regime 0):     10 trades (80.0% WR, $2,618 avg P&L, Total: $26,176)
+⚡ Breakout Momentum (Regime 5): 17 trades (52.9% WR, $951 avg P&L, Total: $16,161)
+📊 Baseline Market (Regime 2):   71 trades (57.7% WR, $207 avg P&L, Total: $14,722)
+✅ Defensive Stable (Regime 4):  17 trades (52.9% WR, $57 avg P&L, Total: $972)
+🔄 Moderate Momentum (Regime 1): 22 trades (27.3% WR, -$190 avg P&L, Total: -$4,181)
+🎯 Total: 137 trades, 53.3% win rate, 54.35% total return
 ```
 
 ## 🔧 Configuration
@@ -360,6 +388,7 @@ strategy->showCurrentHoldings();
 - **External APIs**: Relies on CoinGecko and Alpaca API availability
 - **Internet Connection**: Requires stable connection for real-time data
 - **Computational Requirements**: PCA and clustering analysis needs adequate memory/CPU
+- **Live Trading**: No live trading testing performed due to computational resource constraints
 
 ### Research Framework Limitations
 - **Regime Classification**: System uses 7-regime framework optimized for comprehensive market coverage
@@ -408,12 +437,35 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🎓 Academic Background
 
-This project demonstrates:
-- **Quantitative Finance**: Factor models, regime detection, risk management
-- **Machine Learning**: PCA, K-means clustering, feature engineering
-- **Software Engineering**: Multi-language system design, API integration
-- **Financial Markets**: Cryptocurrency trading, portfolio management
-- **Research Methodology**: Backtesting, statistical analysis, performance attribution
+This project demonstrates comprehensive quantitative finance expertise:
+
+### Quantitative Analysis Skills
+- **Advanced Risk Metrics**: Implementation of Sortino, Calmar, Information ratios
+- **Tail Risk Modeling**: Value at Risk (VaR), Expected Shortfall, extreme event analysis
+- **Statistical Distribution Analysis**: Skewness, kurtosis, non-normality testing
+- **Portfolio Optimization**: Kelly Criterion, drawdown analysis, rolling performance metrics
+- **Factor Models**: PCA-based regime detection with 989+ engineered features
+
+### Machine Learning & Data Science
+- **Dimensionality Reduction**: PCA capturing 89.68% of variance across 25 components
+- **Unsupervised Learning**: K-means clustering with 0.67 silhouette score
+- **Feature Engineering**: 988+ technical indicators and cross-correlation analysis
+- **Time Series Analysis**: Regime persistence and transition probability modeling
+- **Performance Attribution**: Expected Value optimization and trade-level analytics
+
+### Software Engineering Excellence
+- **Multi-Language Architecture**: Python research system + C++ execution engine
+- **Professional Documentation**: Comprehensive Jupyter notebook analysis with 15+ trading metrics
+- **API Integration**: CoinGecko data collection, Alpaca paper trading
+- **Modular Design**: Separable backtesting, regime detection, and execution systems
+- **Version Control**: Git workflow with proper documentation and code organization
+
+### Financial Markets Expertise
+- **Risk Management**: Professional-grade portfolio and position-level controls
+- **Trade Execution**: Real-time paper trading with systematic decision logging
+- **Performance Analysis**: Industry-standard metrics and benchmarking
+- **Regime-Based Trading**: Data-driven allocation across 7 market conditions
+- **Research Methodology**: Rigorous backtesting with comprehensive limitation analysis
 
 
 

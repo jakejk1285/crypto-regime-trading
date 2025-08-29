@@ -96,3 +96,21 @@ shared_regime_data/regime_output/*.json
 *.temp
 *.bak
 *.backup
+
+# Notebook backups and old versions
+*_backup.ipynb
+*_old.ipynb
+backtest_analysis_old.ipynb
+
+# Test and check files
+test_*.py
+*_test.py
+check_*.py
+check_results.py
+run_backtest.py
+strategy_comparison.py
+test_enhanced_strategy.py
+
+# Large data cache directories
+backtest_data_cache/
+*_cache/

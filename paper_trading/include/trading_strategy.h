@@ -4,7 +4,7 @@
  * 
  * @author Jake Kostoryz
  * @date 2025
- * @version 4.0
+ * @version 4.1
  */
 
 #pragma once

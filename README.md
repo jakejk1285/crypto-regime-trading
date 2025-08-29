@@ -86,7 +86,7 @@ position_size = ev_base_allocation × pc_strength_multiplier × persistence_bonu
 ## ⚡ Performance-Optimized Strategy Features
 
 ### Data-Driven Portfolio Management
-- **Performance Optimization**: Strategy achieving 0.621 Sharpe ratio
+- **Performance Optimization**: Strategy achieving 1.437 Sharpe ratio
 - **Regime Selection**: Data-driven regime selection based on backtest analysis
 - **Dynamic Position Sizing**: Portfolio volatility of 24.21%
 - **Risk Controls**: Dynamic risk management with systematic trade execution
